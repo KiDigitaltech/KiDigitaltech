@@ -104,9 +104,20 @@
     <img src="logo.png" alt="UWAKAMA Logo" />
     <h2>Karibu UWAKAMA</h2>
     <form id="loginForm">
-      <input type="email" id="email" placeholder="Barua pepe" required 
-        onkeydown="if(event.key==='Enter'){event.preventDefault(); document.getElementById('password').focus();}" />
-      <input type="password" id="password" placeholder="Nenosiri" required />
+      <input
+        type="email"
+        id="email"
+        placeholder="Barua pepe"
+        required
+        onkeydown="if(event.key==='Enter'){event.preventDefault(); document.getElementById('password').focus();}"
+      />
+      <input
+        type="password"
+        id="password"
+        placeholder="Nenosiri"
+        required
+        onkeydown="if(event.key==='Enter'){event.preventDefault(); document.getElementById('loginForm').requestSubmit();}"
+      />
       <button type="submit">Ingia</button>
     </form>
 
@@ -118,7 +129,11 @@
       <a href="reset-password.html">Umesahau Nenosiri?</a>
     </div>
     <div class="help-desk">
-      <p>Help Desk:<br>Email: imariki035@gmail.com<br>Simu: 0717173853</p>
+      <p>
+        Help Desk:<br />
+        Email: imariki035@gmail.com<br />
+        Simu: 0717173853
+      </p>
     </div>
   </div>
 
@@ -148,7 +163,7 @@
       errorMsg.textContent = "";
       spinner.style.display = "block";
 
-      const email = document.getElementById("email").value;
+      const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
 
       try {
