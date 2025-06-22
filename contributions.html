@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Michango | UWAKAMA</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #007bff;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    header h2 {
+      margin: 0;
+    }
+    nav {
+      margin-top: 10px;
+    }
+    nav a {
+      color: white;
+      margin: 0 10px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    main {
+      max-width: 900px;
+      margin: 30px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h3 {
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 5px;
+      color: #007bff;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+    }
+    button {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background-color: #f1f1f1;
+    }
+    .btn-edit {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 4px;
+      margin-right: 5px;
+    }
+    .btn-edit:hover {
+      background-color: #0056b3;
+    }
+    .btn-delete {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .btn-delete:hover {
+      background-color: #b02a37;
+    }
+    #msg {
+      display: none;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    #msg.success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      display: block;
+    }
+    #msg.error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>Michango ya UWAKAMA</h2>
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="members.html">Wanachama</a>
+      <a href="expenses.html">Matumizi</a>
+      <a href="reports.html">Ripoti</a>
+    </nav>
+  </header>
+
+  <main>
+    <section>
+      <h3>Rekodi / Hariri Mchango</h3>
+      <input type="hidden" id="contributionId" />
+      <select id="member">
+        <option value="">--Chagua Mwanachama--</option>
+      </select>
+      <input type="number" id="amount" placeholder="Kiasi (TZS)" />
+      <input type="month" id="month" />
+      <button id="submitBtn">Hifadhi Mchango</button>
+      <p id="msg"></p>
+    </section>
+
+    <hr>
+
+    <section>
+      <h3>Orodha ya Michango</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>ID Number</th>
+            <th>Jina la Mwanachama</th>
+            <th>Cheo</th>
+            <th>Kiasi (TZS)</th>
+            <th>Mwezi</th>
+            <th>Vitendo</th>
+          </tr>
+        </thead>
+        <tbody id="contributionTableBody"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      addDoc,
+      doc,
+      updateDoc,
+      deleteDoc,
+      query,
+      orderBy,
+      getDoc
+    } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAdCrGuPYfku4swj8URW0SXvJ8CVlUZ0Bc",
+      authDomain: "uwakama-66696.firebaseapp.com",
+      projectId: "uwakama-66696",
+      storageBucket: "uwakama-66696.appspot.com",
+      messagingSenderId: "94913825341",
+      appId: "1:94913825341:web:4da7752f80b1a3a5783854",
+      measurementId: "G-S3PWMTYVB4",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let membersMap = {};
+
+    function clearForm() {
+      document.getElementById("contributionId").value = "";
+      document.getElementById("member").value = "";
+      document.getElementById("amount").value = "";
+      document.getElementById("month").value = "";
+      const msg = document.getElementById("msg");
+      msg.style.display = "none";
+    }
+
+    function generateID(joinedDate, index) {
+      const yyyymmdd = joinedDate.toISOString().slice(2,10).replace(/-/g, '');
+      const suffix = String(index).padStart(3, '0');
+      return `U-${yyyymmdd}-${suffix}`;
+    }
+
+    async function loadMembers() {
+      const snapshot = await getDocs(collection(db, "members"));
+      const memberSelect = document.getElementById("member");
+      memberSelect.innerHTML = '<option value="">--Chagua Mwanachama--</option>';
+
+      let index = 1;
+      membersMap = {}; // reset
+
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        const joinedDate = data.joinedDate?.seconds
+          ? new Date(data.joinedDate.seconds * 1000)
+          : new Date();
+        const idNumber = generateID(joinedDate, index++);
+        membersMap[doc.id] = {
+          name: data.name,
+          role: data.role,
+          idNumber
+        };
+        const option = document.createElement("option");
+        option.value = doc.id;
+        option.textContent = data.name;
+        memberSelect.appendChild(option);
+      });
+    }
+
+    async function loadContributions() {
+      const tableBody = document.getElementById("contributionTableBody");
+      tableBody.innerHTML = "<tr><td colspan='6'>Inapakia michango...</td></tr>";
+
+      try {
+        const q = query(collection(db, "contributions"), orderBy("date", "desc"));
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+          tableBody.innerHTML = "<tr><td colspan='6'>Hakuna michango iliyopo.</td></tr>";
+          return;
+        }
+
+        tableBody.innerHTML = "";
+        snapshot.forEach((docSnap) => {
+          const d = docSnap.data();
+          const member = membersMap[d.memberId] || { name: "Haijulikani", role: "-", idNumber: "Haijulikani" };
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${member.idNumber}</td>
+            <td>${member.name}</td>
+            <td>${member.role}</td>
+            <td>${d.amount}</td>
+            <td>${d.month}</td>
+            <td>
+              <button class="btn-edit" data-id="${docSnap.id}">Hariri</button>
+              <button class="btn-delete" data-id="${docSnap.id}">Futa</button>
+            </td>
+          `;
+          tableBody.appendChild(tr);
+        });
+
+        addTableEventListeners();
+      } catch (error) {
+        tableBody.innerHTML = `<tr><td colspan='6'>Imeshindikana kupakia michango: ${error.message}</td></tr>`;
+      }
+    }
+
+    function addTableEventListeners() {
+      document.querySelectorAll(".btn-edit").forEach(btn => {
+        btn.onclick = async () => {
+          const id = btn.getAttribute("data-id");
+          try {
+            const docRef = doc(db, "contributions", id);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+              const d = docSnap.data();
+              document.getElementById("contributionId").value = docSnap.id;
+              document.getElementById("member").value = d.memberId;
+              document.getElementById("amount").value = d.amount;
+              document.getElementById("month").value = d.month;
+              window.scrollTo({top: 0, behavior: 'smooth'});
+            } else {
+              alert("Mchango haukupatikana.");
+            }
+          } catch (err) {
+            alert("Kosa kupata mchango: " + err.message);
+          }
+        };
+      });
+
+      document.querySelectorAll(".btn-delete").forEach(btn => {
+        btn.onclick = async () => {
+          const id = btn.getAttribute("data-id");
+          if(confirm("Una hakika unataka kufuta mchango huu?")) {
+            try {
+              await deleteDoc(doc(db, "contributions", id));
+              alert("Mchango umefutwa!");
+              await loadContributions();
+            } catch (err) {
+              alert("Kosa kufuta mchango: " + err.message);
+            }
+          }
+        };
+      });
+    }
+
+    async function saveContribution(e) {
+      e.preventDefault();
+      const id = document.getElementById("contributionId").value;
+      const memberId = document.getElementById("member").value;
+      const amount = parseFloat(document.getElementById("amount").value);
+      const month = document.getElementById("month").value;
+      const msg = document.getElementById("msg");
+
+      if (!memberId || !amount || !month) {
+        msg.textContent = "Tafadhali jaza taarifa zote!";
+        msg.className = "error";
+        msg.style.display = "block";
+        return;
+      }
+
+      try {
+        if(id) {
+          // update existing contribution
+          await updateDoc(doc(db, "contributions", id), {
+            memberId,
+            amount,
+            month,
+            date: new Date()
+          });
+          msg.textContent = "Mchango umesasishwa!";
+        } else {
+          // add new contribution
+          await addDoc(collection(db, "contributions"), {
+            memberId,
+            amount,
+            month,
+            date: new Date()
+          });
+          msg.textContent = "Mchango umehifadhiwa!";
+        }
+        msg.className = "success";
+        msg.style.display = "block";
+        clearForm();
+        await loadContributions();
+      } catch (error) {
+        msg.textContent = "Kosa: " + error.message;
+        msg.className = "error";
+        msg.style.display = "block";
+      }
+    }
+
+    document.getElementById("submitBtn").addEventListener("click", saveContribution);
+
+    await loadMembers();
+    await loadContributions();
+  </script>
+</body>
+</html>
