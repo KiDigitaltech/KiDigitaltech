@@ -178,7 +178,6 @@
       font-weight: bold;
     }
 
-    /* Sidebar for mobile */
     .sidebar {
       display: none;
       position: fixed;
@@ -206,6 +205,7 @@
     }
 
     .sidebar.show {
+      display: flex;
       left: 0;
     }
 
@@ -229,7 +229,7 @@
   <header>
     <h2>Dashboard | UWAKAMA</h2>
 
-    <div class="hamburger" onclick="toggleSidebar()">☰</div>
+    <div class="hamburger" id="hamburgerBtn">☰</div>
 
     <div class="profile">
       <span class="icon" onclick="toggleDropdown(this)">👤</span>
@@ -248,7 +248,7 @@
     </nav>
   </header>
 
-  <!-- Sidebar kwa simu -->
+  <!-- Sidebar ya simu -->
   <div class="sidebar" id="sidebarMenu">
     <a href="dashboard.html">Dashboard</a>
     <a href="members.html">Wanachama</a>
@@ -399,15 +399,16 @@
       }
     });
 
+    // Hamburger sidebar toggle
+    document.getElementById("hamburgerBtn").addEventListener("click", () => {
+      const sidebar = document.getElementById("sidebarMenu");
+      sidebar.classList.toggle("show");
+    });
+
     window.logout = function () {
       signOut(auth).then(() => {
         window.location.href = "index.html";
       });
-    };
-
-    window.toggleSidebar = function () {
-      const sidebar = document.getElementById("sidebarMenu");
-      sidebar.classList.toggle("show");
     };
   </script>
 </body>
