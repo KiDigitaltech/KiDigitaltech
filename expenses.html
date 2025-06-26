@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Matumizi | UWAKAMA</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #fff7f0;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #fb8c00;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    nav a {
+      color: white;
+      margin: 0 10px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    main {
+      max-width: 900px;
+      margin: 30px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h3 {
+      border-bottom: 2px solid #fb8c00;
+      padding-bottom: 5px;
+      color: #fb8c00;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+    }
+    button {
+      background-color: #fb8c00;
+      color: white;
+      border: none;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #f57c00;
+    }
+    .receipt {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin-top: 10px;
+      background: #fff4e5;
+      border-radius: 6px;
+    }
+    .btn-print, .btn-edit, .btn-delete {
+      margin-right: 10px;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-print { background-color: #17a2b8; color: white; }
+    .btn-edit { background-color: #ffc107; color: black; }
+    .btn-delete { background-color: #dc3545; color: white; }
+    #msg {
+      display: none;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    #msg.success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      display: block;
+    }
+    #msg.error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>Matumizi ya UWAKAMA</h2>
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="members.html">Wanachama</a>
+      <a href="contributions.html">Michango</a>
+      <a href="expenses.html">Matumizi</a>
+      <a href="reports.html">Ripoti</a>
+    </nav>
+  </header>
+  <main>
+    <h3>Rekodi / Hariri Matumizi</h3>
+    <form id="expenseForm">
+      <input type="hidden" id="expenseId" />
+      <input type="text" id="description" placeholder="Maelezo ya matumizi" required />
+      <input type="number" id="amount" placeholder="Kiasi (TZS)" required />
+      <input type="text" id="transactionId" placeholder="Namba ya Muamala" required />
+      <input type="date" id="date" required />
+      <input type="text" id="receiverName" placeholder="Aliyepokea" required />
+      <input type="text" id="position" placeholder="Cheo" required />
+      <button type="submit" id="saveBtn">Hifadhi Matumizi</button>
+    </form>
+    <p id="msg"></p>
+
+    <h3>Orodha ya Matumizi</h3>
+    <div id="expenseList"></div>
+  </main>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      addDoc,
+      updateDoc,
+      deleteDoc,
+      doc
+    } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAdCrGuPYfku4swj8URW0SXvJ8CVlUZ0Bc",
+      authDomain: "uwakama-66696.firebaseapp.com",
+      projectId: "uwakama-66696"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const form = document.getElementById('expenseForm');
+    const list = document.getElementById('expenseList');
+    const msg = document.getElementById('msg');
+    const saveBtn = document.getElementById('saveBtn');
+    let editingId = null;
+
+    function show(message, type) {
+      msg.textContent = message;
+      msg.className = type;
+      msg.style.display = "block";
+      setTimeout(() => { msg.style.display = "none" }, 4000);
+    }
+
+    async function getTotals() {
+      let totalContributions = 0;
+      let totalExpenses = 0;
+
+      const contribSnap = await getDocs(collection(db, "contributions"));
+      contribSnap.forEach(doc => {
+        const c = doc.data();
+        totalContributions += Number(c.amount || 0);
+      });
+
+      const expenseSnap = await getDocs(collection(db, "expenses"));
+      expenseSnap.forEach(doc => {
+        const e = doc.data();
+        totalExpenses += Number(e.amount || 0);
+      });
+
+      return { totalContributions, totalExpenses };
+    }
+
+    async function load() {
+      const snapshot = await getDocs(collection(db, "expenses"));
+      list.innerHTML = "";
+      snapshot.forEach(docSnap => {
+        const d = docSnap.data();
+        const div = document.createElement("div");
+        div.className = "receipt";
+        div.innerHTML = `
+          <h4>Maelezo: ${d.description}</h4>
+          <p><strong>Kiasi:</strong> TZS ${Number(d.amount).toLocaleString()}</p>
+          <p><strong>Namba ya Muamala:</strong> ${d.transactionId || '-'}</p>
+          <p><strong>Tarehe:</strong> ${d.date}</p>
+          <button class="btn-edit">Hariri</button>
+          <button class="btn-delete">Futa</button>
+        `;
+        div.querySelector('.btn-edit').onclick = () => {
+          editingId = docSnap.id;
+          document.getElementById('description').value = d.description;
+          document.getElementById('amount').value = d.amount;
+          document.getElementById('transactionId').value = d.transactionId || "";
+          document.getElementById('date').value = d.date;
+          document.getElementById('receiverName').value = d.receiverName || "";
+          document.getElementById('position').value = d.position || "";
+          saveBtn.textContent = "Hariri Matumizi";
+        };
+        div.querySelector('.btn-delete').onclick = async () => {
+          if (confirm("Una uhakika unataka kufuta matumizi haya?")) {
+            await deleteDoc(doc(db, "expenses", docSnap.id));
+            load();
+          }
+        };
+        list.appendChild(div);
+      });
+    }
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const des = document.getElementById('description').value.trim();
+      const amt = parseFloat(document.getElementById('amount').value);
+      const dat = document.getElementById('date').value;
+      const txid = document.getElementById('transactionId').value.trim();
+      const rcv = document.getElementById('receiverName').value.trim();
+      const pos = document.getElementById('position').value.trim();
+
+      if (!des || !amt || !dat || !txid || !rcv || !pos) {
+        return show("Tafadhali jaza taarifa zote!", "error");
+      }
+
+      try {
+        const { totalContributions, totalExpenses } = await getTotals();
+        if ((totalExpenses + amt) > totalContributions) {
+          return show("Hauna salio la kutosha kufanya matumizi haya!", "error");
+        }
+
+        if (editingId) {
+          await updateDoc(doc(db, "expenses", editingId), {
+            description: des,
+            amount: amt,
+            transactionId: txid,
+            date: dat,
+            receiverName: rcv,
+            position: pos
+          });
+          show("Matumizi yamehaririwa", "success");
+          editingId = null;
+          saveBtn.textContent = "Hifadhi Matumizi";
+        } else {
+          await addDoc(collection(db, "expenses"), {
+            description: des,
+            amount: amt,
+            transactionId: txid,
+            date: dat,
+            receiverName: rcv,
+            position: pos,
+            createdAt: new Date()
+          });
+          show("Matumizi yamehifadhiwa", "success");
+        }
+        form.reset();
+        load();
+      } catch (e) {
+        show("Kosa: " + e.message, "error");
+      }
+    });
+
+    load();
+  </script>
+</body>
+</html>

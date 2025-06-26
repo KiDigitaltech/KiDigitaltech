@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard | UWAKAMA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background-color: #f9f9f9;
+      margin: 0;
+      color: #333;
+    }
+
+    header {
+      background: linear-gradient(to right, #fb8c00, #f57c00);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    header h2 {
+      margin: 0;
+    }
+
+    nav {
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    nav a {
+      color: white;
+      background-color: rgba(255,255,255,0.2);
+      padding: 8px 14px;
+      border-radius: 6px;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
+
+    nav a.active, nav a:hover {
+      background-color: rgba(255,255,255,0.35);
+    }
+
+    main {
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      padding: 25px;
+      text-align: center;
+      transition: transform 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    .card h3 {
+      color: #666;
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+    }
+
+    .card p {
+      font-size: 1.9rem;
+      font-weight: bold;
+      color: #fb8c00;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #777;
+      font-size: 0.9em;
+      background: #fff3e0;
+      margin-top: 40px;
+    }
+
+    .reset-container {
+      max-width: 1000px;
+      margin: 20px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+
+    .reset-container h3 {
+      color: #b02a37;
+    }
+
+    .reset-container button {
+      padding: 10px 20px;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      background-color: #dc3545;
+      color: white;
+      cursor: pointer;
+      margin: 10px 5px;
+      transition: background-color 0.3s ease;
+    }
+    .reset-container button:hover {
+      background-color: #b02a37;
+    }
+
+    .reset-container input[type="password"] {
+      padding: 10px;
+      margin-top: 10px;
+      width: 100%;
+      max-width: 300px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+
+    #loadingOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      font-size: 30px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body>
+  <div id="loadingOverlay">Tafadhali subiri...</div>
+  <header>
+    <h2><i class="fas fa-chart-line"></i> Dashboard | UWAKAMA</h2>
+    <nav>
+      <a href="dashboard.html" class="active"><i class="fas fa-home"></i> Dashibodi</a>
+      <a href="members.html"><i class="fas fa-users"></i> Wanachama</a>
+      <a href="contributions.html"><i class="fas fa-donate"></i> Michango</a>
+	  <a href="members-contributions.html"><i class="fas fa-users"></i> Orodha ya Wanachama</a>
+      <a href="expenses.html"><i class="fas fa-money-bill-wave"></i> Matumizi</a>
+      <a href="reports.html"><i class="fas fa-file-alt"></i> Ripoti</a>
+      <a href="upload.html"><i class="fas fa-file-upload"></i> Sajili kwa Faili</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="card">
+      <h3>Idadi ya Wanachama</h3>
+      <p id="totalMembers">Inapakia...</p>
+    </div>
+    <div class="card">
+      <h3>Jumla ya Michango (TZS)</h3>
+      <p id="totalContributions">Inapakia...</p>
+    </div>
+    <div class="card">
+      <h3>Jumla ya Matumizi (TZS)</h3>
+      <p id="totalExpenses">Inapakia...</p>
+    </div>
+    <div class="card">
+      <h3>Baki ya Akaunti</h3>
+      <p id="balance">Inapakia...</p>
+    </div>
+  </main>
+
+  <div class="reset-container">
+    <h3><i class="fas fa-exclamation-triangle"></i> Reset System</h3>
+    <p>Hii itafuta taarifa zote kutoka kwenye mfumo. Hakikisha umehifadhi nakala ya data kabla ya kuendelea.</p>
+    <input type="password" id="adminPassword" placeholder="Weka nenosiri la Admin" />
+    <br /><br />
+    <button id="downloadSampleBtn">Pakua Sample File</button>
+    <button id="backupBtn">Pakua Backup</button>
+    <button id="resetBtn">Futa Taarifa Zote</button>
+    <button id="restoreBtn">Rejesha Backup</button>
+    <input type="file" id="restoreFile" accept="application/json" style="display:none;" />
+  </div>
+
+  <footer>
+    &copy; 2025 UWAKAMA - Umoja wa Walimu Kata ya Kahe Mashariki
+  </footer>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+  import {
+    getFirestore,
+    collection,
+    getDocs,
+    deleteDoc,
+    doc,
+    setDoc
+  } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAdCrGuPYfku4swj8URW0SXvJ8CVlUZ0Bc",
+    authDomain: "uwakama-66696.firebaseapp.com",
+    projectId: "uwakama-66696",
+    storageBucket: "uwakama-66696.appspot.com",
+    messagingSenderId: "94913825341",
+    appId: "1:94913825341:web:4da7752f80b1a3a5783854",
+    measurementId: "G-S3PWMTYVB4"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  // Admin password hardcoded for example only, replace with secure check in real app
+  const ADMIN_PASSWORD = "admin123";
+
+  const loadingOverlay = document.getElementById("loadingOverlay");
+  const adminPasswordInput = document.getElementById("adminPassword");
+
+  function showLoading(show) {
+    loadingOverlay.style.display = show ? "flex" : "none";
+  }
+
+  // Check user is logged in
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      window.location.href = "index.html";
+    }
+  });
+
+  async function fetchTotalMembers() {
+    const snapshot = await getDocs(collection(db, "members"));
+    return snapshot.size;
+  }
+
+  async function fetchTotalContributions() {
+    const snapshot = await getDocs(collection(db, "contributions"));
+    let total = 0;
+    snapshot.forEach(doc => {
+      total += doc.data().amount || 0;
+    });
+    return total;
+  }
+
+  async function fetchTotalExpenses() {
+    const snapshot = await getDocs(collection(db, "expenses"));
+    let total = 0;
+    snapshot.forEach(doc => {
+      total += doc.data().amount || 0;
+    });
+    return total;
+  }
+
+  async function loadDashboard() {
+    try {
+      showLoading(true);
+      const [members, contributions, expenses] = await Promise.all([
+        fetchTotalMembers(),
+        fetchTotalContributions(),
+        fetchTotalExpenses(),
+      ]);
+      document.getElementById("totalMembers").textContent = members;
+      document.getElementById("totalContributions").textContent = contributions.toLocaleString("en-US");
+      document.getElementById("totalExpenses").textContent = expenses.toLocaleString("en-US");
+      const bal = contributions - expenses;
+      document.getElementById("balance").textContent = bal.toLocaleString("en-US");
+    } catch (error) {
+      console.error(error);
+    } finally {
+      showLoading(false);
+    }
+  }
+
+  // Delete all documents in a collection
+  async function deleteAll(collectionName) {
+    const snapshot = await getDocs(collection(db, collectionName));
+    const batchDeletes = [];
+    snapshot.forEach(docSnap => {
+      batchDeletes.push(deleteDoc(doc(db, collectionName, docSnap.id)));
+    });
+    await Promise.all(batchDeletes);
+  }
+
+  // Backup data from collections
+  async function backupData() {
+    showLoading(true);
+    try {
+      const collections = ["members", "contributions", "expenses"];
+      const backup = {};
+      for (const col of collections) {
+        const snapshot = await getDocs(collection(db, col));
+        backup[col] = [];
+        snapshot.forEach(docSnap => {
+          backup[col].push({ id: docSnap.id, data: docSnap.data() });
+        });
+      }
+      const jsonStr = JSON.stringify(backup, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `UWAKAMA-backup-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      alert("Kosa katika kufanya backup: " + error.message);
+    } finally {
+      showLoading(false);
+    }
+  }
+
+  // Reset system after admin password check
+  async function resetSystem() {
+    const password = adminPasswordInput.value.trim();
+    if (password !== ADMIN_PASSWORD) {
+      alert("Nenosiri la admin sio sahihi!");
+      return;
+    }
+    if (!confirm("Je! Unathibitisha kufuta taarifa zote kwenye mfumo huu? Hii haiwezi kurejeshwa!")) {
+      return;
+    }
+
+    showLoading(true);
+    try {
+      await deleteAll("members");
+      await deleteAll("contributions");
+      await deleteAll("expenses");
+      alert("Taarifa zote zimefutwa kwa mafanikio.");
+      loadDashboard();
+    } catch (error) {
+      alert("Kosa katika kufuta taarifa: " + error.message);
+    } finally {
+      showLoading(false);
+    }
+  }
+
+  // Restore data from JSON file
+  async function restoreData(file) {
+    showLoading(true);
+    try {
+      const text = await file.text();
+      const backup = JSON.parse(text);
+      // Delete existing data first
+      await deleteAll("members");
+      await deleteAll("contributions");
+      await deleteAll("expenses");
+
+      // Restore members
+      for (const item of backup.members || []) {
+        await setDoc(doc(db, "members", item.id), item.data);
+      }
+      // Restore contributions
+      for (const item of backup.contributions || []) {
+        await setDoc(doc(db, "contributions", item.id), item.data);
+      }
+      // Restore expenses
+      for (const item of backup.expenses || []) {
+        await setDoc(doc(db, "expenses", item.id), item.data);
+      }
+      alert("Umefanikiwa Kurejesha DATA !.");
+      loadDashboard();
+    } catch (error) {
+      alert("Kosa katika kurejesha data: " + error.message);
+    } finally {
+      showLoading(false);
+    }
+  }
+
+  document.getElementById("backupBtn").addEventListener("click", backupData);
+  document.getElementById("resetBtn").addEventListener("click", resetSystem);
+  document.getElementById("restoreBtn").addEventListener("click", () => {
+    document.getElementById("restoreFile").click();
+  });
+
+  document.getElementById("restoreFile").addEventListener("change", (e) => {
+    if (e.target.files.length > 0) {
+      restoreData(e.target.files[0]);
+      e.target.value = ""; // reset file input
+    }
+  });
+
+  // Download sample Excel file for upload
+  document.getElementById("downloadSampleBtn").addEventListener("click", () => {
+    const sampleCsv = `Jina Kamili,Cheo,Tarehe ya Kujiunga,Januari,Februari,Machi,Aprili,Mei,Juni,Julai,Agosti,Septemba,Oktoba,Novemba,Disemba
+John Doe,Mwanachama,2023-01-10,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000
+Jane Smith,Kiongozi,2023-02-15,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500
+`;
+    const blob = new Blob([sampleCsv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "UWAKAMA-Sample-Excel.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  loadDashboard();
+</script>
+</body>
+</html>

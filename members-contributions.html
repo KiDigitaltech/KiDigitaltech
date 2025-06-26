@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Orodha ya Wanachama | UWAKAMA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    /* Styles kama zilivyokuwa hapo awali */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    header {
+      background-color: #ff8800;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    main {
+      max-width: 1000px;
+      margin: 30px auto;
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.05);
+    }
+
+    h1, h2 {
+      margin: 0 0 15px 0;
+    }
+
+    h2 {
+      text-align: center;
+      color: #ff8800;
+      font-size: 1.5em;
+    }
+
+    .info-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+
+    .info-bar input {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      flex-grow: 1;
+      max-width: 300px;
+    }
+
+    .totals {
+      margin-top: 10px;
+      color: #555;
+      font-size: 15px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 12px;
+      border: 1px solid #eee;
+      text-align: left;
+    }
+
+    th {
+      background-color: #fff3e0;
+      color: #444;
+    }
+
+    tr:nth-child(even) {
+      background-color: #fafafa;
+    }
+
+    tr:hover {
+      background-color: #fff0e0;
+    }
+
+    a {
+      color: #ff6600;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+
+      thead tr {
+        display: none;
+      }
+
+      tr {
+        margin-bottom: 15px;
+        border-bottom: 2px solid #ff8800;
+      }
+
+      td {
+        padding: 10px;
+        text-align: right;
+        position: relative;
+      }
+
+      td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        text-align: left;
+        font-weight: bold;
+        color: #555;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Orodha ya Wanachama</h1>
+  </header>
+  <main>
+    <h2>Wanachama na Michango Yao</h2>
+
+    <div class="info-bar">
+      <input type="text" id="searchInput" placeholder="Tafuta kwa jina, cheo, shule au ID..." oninput="filterTable()" />
+      <div class="totals" id="totalsDisplay">Wanachama: 0 | Viongozi: 0</div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID Number</th>
+          <th>Jina la Mwanachama</th>
+          <th>Cheo</th>
+          <th>Shule</th>
+          <th>Tarehe ya Kujiunga</th>
+          <th>Jumla ya Michango (TZS)</th>
+        </tr>
+      </thead>
+      <tbody id="membersTable">
+        <tr><td colspan="6">Inapakia...</td></tr>
+      </tbody>
+    </table>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs
+    } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAdCrGuPYfku4swj8URW0SXvJ8CVlUZ0Bc",
+      authDomain: "uwakama-66696.firebaseapp.com",
+      projectId: "uwakama-66696",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let allMembers = [];
+
+    async function loadMembersWithContributions() {
+      const tableBody = document.getElementById("membersTable");
+      tableBody.innerHTML = "<tr><td colspan='6'>Inapakia taarifa...</td></tr>";
+
+      try {
+        const membersSnap = await getDocs(collection(db, "members"));
+        const contributionsSnap = await getDocs(collection(db, "contributions"));
+
+        const contributionsByMember = {};
+        contributionsSnap.forEach(doc => {
+          const data = doc.data();
+          if (!contributionsByMember[data.memberId]) {
+            contributionsByMember[data.memberId] = 0;
+          }
+          contributionsByMember[data.memberId] += data.amount;
+        });
+
+        allMembers = [];
+
+        membersSnap.forEach(docSnap => {
+          const m = docSnap.data();
+          const memberId = docSnap.id;
+          const joined = m.joinedDate?.seconds ? new Date(m.joinedDate.seconds * 1000) : new Date();
+          const total = contributionsByMember[memberId] || 0;
+
+          // Tengeneza ID Number kisasa:
+          // Mfano: UWAKAMA-YYMMDD-XXXXXX (XXXXXX ni sehemu ya mwisho ya doc ID)
+          const ymd = joined.toISOString().slice(2,10).replace(/-/g, ''); // YYMMDD
+          const idNumber = `UWAKAMA-${ymd}-${memberId.slice(-6).toUpperCase()}`;
+
+          allMembers.push({
+            id: memberId,
+            idNumber,
+            name: m.name,
+            role: m.role || "Mwanachama",
+            school: m.school || "Haijatajwa",
+            joinedDate: joined,
+            totalContributions: total
+          });
+        });
+
+        renderTable(allMembers);
+        updateTotals();
+      } catch (error) {
+        tableBody.innerHTML = `<tr><td colspan="6">Kosa: ${error.message}</td></tr>`;
+      }
+    }
+
+    function renderTable(data) {
+      const tableBody = document.getElementById("membersTable");
+      tableBody.innerHTML = "";
+
+      data.forEach(member => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td data-label="ID Number">${member.idNumber}</td>
+          <td data-label="Jina">
+            <a href="member-details.html?id=${member.id}&name=${encodeURIComponent(member.name)}">${member.name}</a>
+          </td>
+          <td data-label="Cheo">${member.role}</td>
+          <td data-label="Shule">${member.school}</td>
+          <td data-label="Tarehe">${member.joinedDate.toISOString().slice(0, 10)}</td>
+          <td data-label="Michango">${member.totalContributions.toLocaleString()} TZS</td>
+        `;
+        tableBody.appendChild(tr);
+      });
+    }
+
+    function updateTotals() {
+      const totalMembers = allMembers.length;
+      const leaders = allMembers.filter(m => m.role.toLowerCase() !== "mwanachama").length;
+      document.getElementById("totalsDisplay").textContent = `Wanachama: ${totalMembers} | Viongozi: ${leaders}`;
+    }
+
+    window.filterTable = function () {
+      const query = document.getElementById("searchInput").value.toLowerCase();
+      const filtered = allMembers.filter(m =>
+        m.idNumber.toLowerCase().includes(query) ||
+        m.name.toLowerCase().includes(query) ||
+        m.role.toLowerCase().includes(query) ||
+        m.school.toLowerCase().includes(query)
+      );
+      renderTable(filtered);
+    };
+
+    await loadMembersWithContributions();
+  </script>
+</body>
+</html>

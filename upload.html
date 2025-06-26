@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pakia Wanachama - UWAKAMA</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f7fa;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      background-color: white;
+      padding: 30px 40px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+    }
+
+    h2 {
+      color: #333;
+      margin-bottom: 25px;
+    }
+
+    input[type="file"] {
+      margin-bottom: 20px;
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #bbb;
+      border-radius: 5px;
+    }
+
+    button, a.button-link {
+      background-color: #f97316;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      width: 100%;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 10px;
+    }
+
+    button:hover, a.button-link:hover {
+      background-color: #d65a00;
+    }
+
+    #status {
+      margin-top: 20px;
+      font-weight: 600;
+      min-height: 24px;
+    }
+
+    #status.success {
+      color: green;
+    }
+
+    #status.error {
+      color: red;
+    }
+
+    .actions {
+      margin-top: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Pakia Faili la Excel la Wanachama</h2>
+    <input type="file" id="excelFile" accept=".xlsx, .xls" />
+    <button id="uploadBtn">Pakia</button>
+    <p id="status"></p>
+
+    <div class="actions">
+      <a href="dashboard.html" class="button-link">⟵ Rudi kwenye Dashibodi</a>
+      <a href="https://docs.google.com/spreadsheets/d/1hLtG0oTC_XqVkCVBli6wSuXJNmkmbOHX/edit?usp=sharing&ouid=113384315797072255506&rtpof=true&sd=true" class="button-link" download>⬇️ Pakua Sample Faili</a>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      Timestamp
+    } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAdCrGuPYfku4swj8URW0SXvJ8CVlUZ0Bc",
+      authDomain: "uwakama-66696.firebaseapp.com",
+      projectId: "uwakama-66696",
+      storageBucket: "uwakama-66696.appspot.com",
+      messagingSenderId: "94913825341",
+      appId: "1:94913825341:web:4da7752f80b1a3a5783854"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    function parseExcel(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: "array" });
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            const json = XLSX.utils.sheet_to_json(sheet);
+            resolve(json);
+          } catch (err) {
+            reject(err);
+          }
+        };
+        reader.onerror = () => reject(new Error("Imeshindikana kusoma faili la Excel."));
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    function parseExcelDate(value) {
+      if (!value) return new Date();
+      if (!isNaN(value)) {
+        return new Date((Number(value) - 25569) * 86400 * 1000);
+      }
+      return new Date(value);
+    }
+
+    document.getElementById("uploadBtn").addEventListener("click", async () => {
+      const fileInput = document.getElementById("excelFile");
+      const status = document.getElementById("status");
+      status.className = "";
+      status.innerText = "";
+
+      if (!fileInput.files.length) {
+        status.className = "error";
+        status.innerText = "Tafadhali chagua faili la Excel.";
+        return;
+      }
+
+      try {
+        status.innerText = "Inapakia data, tafadhali subiri...";
+        const rows = await parseExcel(fileInput.files[0]);
+
+        if (!rows.length) {
+          status.className = "error";
+          status.innerText = "Faili halina data.";
+          return;
+        }
+
+        for (const row of rows) {
+          const name = row["Jina Kamili"] || "";
+          const role = row["Cheo"] || "";
+          const school = row["Shule"] || "";  // Sehemu ya shule imeongezwa hapa
+          const joinedDate = parseExcelDate(row["Tarehe ya Kujiunga"]);
+
+          if (!name) continue;
+
+          const memberRef = await addDoc(collection(db, "members"), {
+            name,
+            role,
+            school, // Hifadhi shule kwenye database
+            joinedDate: Timestamp.fromDate(joinedDate)
+          });
+
+          const months = [
+            "Januari", "Februari", "Machi", "Aprili", "Mei", "Juni",
+            "Julai", "Agosti", "Septemba", "Oktoba", "Novemba", "Disemba"
+          ];
+
+          for (const month of months) {
+            const amount = Number(row[month]) || 0;
+            if (amount > 0) {
+              await addDoc(collection(db, "contributions"), {
+                memberId: memberRef.id,
+                amount,
+                month,
+                date: new Date()
+              });
+            }
+          }
+        }
+
+        status.className = "success";
+        status.innerText = "Umefanikiwa kupakia wanachama na michango!";
+        fileInput.value = "";
+      } catch (error) {
+        console.error("Kosa:", error);
+        status.className = "error";
+        status.innerText = "Kosa: " + error.message;
+      }
+    });
+  </script>
+</body>
+</html>

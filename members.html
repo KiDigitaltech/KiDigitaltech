@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wanachama | UWAKAMA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    body { background-color: #f9f9f9; margin: 0; color: #333; }
+    header { background: linear-gradient(to right, #fb8c00, #f57c00); color: white; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    header h2 { margin: 0; text-align: center; }
+    nav { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+    nav a { color: white; background-color: rgba(255,255,255,0.15); padding: 10px 15px; border-radius: 6px; text-decoration: none; transition: 0.3s; }
+    nav a:hover { background-color: rgba(255,255,255,0.3); }
+    main {
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+      overflow-x: auto;
+    }
+    h3 { color: #fb8c00; margin-bottom: 10px; }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    input, select, button { width: 100%; padding: 12px; margin-top: 5px; border-radius: 8px; border: 1px solid #ccc; font-size: 1em; }
+    button { background-color: #fb8c00; color: white; font-weight: bold; border: none; margin-top: 15px; cursor: pointer; transition: 0.3s; }
+    button:hover { background-color: #f57c00; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+      min-width: 700px;
+    }
+    th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+    th { background-color: #ffe0b2; }
+    #msg { display: none; margin-top: 15px; padding: 12px; border-radius: 6px; font-weight: 500; }
+    #msg.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; display: block; }
+    #msg.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; display: block; }
+    .actions { display: flex; gap: 10px; }
+    .actions button { font-size: 14px; padding: 6px 10px; }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 99;
+      left: 0; top: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      margin: 10% auto;
+      border-radius: 10px;
+      max-width: 400px;
+    }
+    .modal-content h4 { margin-top: 0; color: #fb8c00; }
+    .modal-content input, .modal-content select { margin-bottom: 10px; }
+    .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+    @media (max-width: 600px) {
+      main {
+        margin: 20px 10px;
+        padding: 10px;
+      }
+      table {
+        font-size: 14px;
+      }
+      .actions button {
+        padding: 8px 12px;
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2><i class="fas fa-users"></i> Wanachama wa UWAKAMA</h2>
+    <nav>
+      <a href="dashboard.html"><i class="fas fa-home"></i> Dashibodi</a>
+      <a href="members.html"><i class="fas fa-users"></i> Wanachama</a>
+      <a href="contributions.html"><i class="fas fa-donate"></i> Michango</a>
+      <a href="expenses.html"><i class="fas fa-money-bill-wave"></i> Matumizi</a>
+      <a href="reports.html"><i class="fas fa-chart-line"></i> Ripoti</a>
+    </nav>
+  </header>
+
+  <main>
+    <section>
+      <h3>Ongeza Mwanachama</h3>
+      <form id="memberForm">
+        <label for="name">Jina Kamili</label>
+        <input type="text" id="name" required />
+        <label for="role">Cheo / Nafasi</label>
+        <input type="text" id="role" required />
+        <label for="school">Shule Anayotokea</label>
+        <select id="school" required>
+          <option value="">-- Chagua Shule --</option>
+          <option value="Shule A">Shule A</option>
+          <option value="Shule B">Shule B</option>
+          <option value="Shule C">Shule C</option>
+        </select>
+        <label for="joinedDate">Tarehe ya Kujiunga</label>
+        <input type="date" id="joinedDate" required />
+        <button type="submit">Hifadhi Mwanachama</button>
+        <p id="msg"></p>
+      </form>
+    </section>
+
+    <section>
+      <h3>Orodha ya Wanachama</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>ID Number</th>
+            <th>Jina</th>
+            <th>Cheo</th>
+            <th>Shule</th>
+            <th>Tarehe</th>
+            <th>Hatua</th>
+          </tr>
+        </thead>
+        <tbody id="membersTableBody"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <h4>Hariri Mwanachama</h4>
+      <input type="text" id="editName" />
+      <input type="text" id="editRole" />
+      <select id="editSchool">
+        <option value="">-- Chagua Shule --</option>
+        <option value="Shule A">Shule A</option>
+        <option value="Shule B">Shule B</option>
+        <option value="Shule C">Shule C</option>
+      </select>
+      <input type="date" id="editDate" />
+      <div class="modal-buttons">
+        <button onclick="saveEdit()">Hifadhi</button>
+        <button onclick="closeModal()">Funga</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, Timestamp, orderBy, query, where } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAdCrGuPYfku4swj8URW0SXvJ8CVlUZ0Bc",
+      authDomain: "uwakama-66696.firebaseapp.com",
+      projectId: "uwakama-66696",
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let currentEditId = "";
+
+    document.getElementById("memberForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("name").value.trim();
+      const role = document.getElementById("role").value.trim();
+      const school = document.getElementById("school").value;
+      const date = document.getElementById("joinedDate").value;
+      const msg = document.getElementById("msg");
+
+      if (!name || !role || !school || !date) {
+        msg.textContent = "Tafadhali jaza taarifa zote.";
+        msg.className = "error";
+        msg.style.display = "block";
+        return;
+      }
+
+      try {
+        // Angalia kama jina limekwisha kuwepo Firestore
+        const q = query(collection(db, "members"), where("name", "==", name));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          msg.textContent = `Jina "${name}" tayari limesajiliwa. Tafadhali tumia jina lingine.`;
+          msg.className = "error";
+          msg.style.display = "block";
+          return;
+        }
+
+        // Kama halipo, ongeza mwanachama mpya
+        await addDoc(collection(db, "members"), {
+          name, role, school, joinedDate: Timestamp.fromDate(new Date(date))
+        });
+        msg.textContent = "Mwanachama ameongezwa!";
+        msg.className = "success";
+        msg.style.display = "block";
+        e.target.reset();
+        loadMembers();
+      } catch (err) {
+        msg.textContent = "Kosa: " + err.message;
+        msg.className = "error";
+        msg.style.display = "block";
+      }
+    });
+
+    async function loadMembers() {
+      const tbody = document.getElementById("membersTableBody");
+      tbody.innerHTML = "<tr><td colspan='6'>Inapakia...</td></tr>";
+      const snapshot = await getDocs(query(collection(db, "members"), orderBy("joinedDate", "desc")));
+      tbody.innerHTML = "";
+
+      snapshot.forEach(docSnap => {
+        const d = docSnap.data();
+        const joined = d.joinedDate?.seconds ? new Date(d.joinedDate.seconds * 1000) : new Date();
+        const idNum = `UWAKAMA-${joined.toISOString().slice(2,10).replace(/-/g, '')}-${docSnap.id.slice(-6).toUpperCase()}`;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${idNum}</td>
+          <td>${d.name}</td>
+          <td>${d.role}</td>
+          <td>${d.school}</td>
+          <td>${joined.toISOString().slice(0,10)}</td>
+          <td class="actions">
+            <button onclick="openEdit('${docSnap.id}', '${d.name}', '${d.role}', '${d.school}', '${joined.toISOString().slice(0,10)}')"><i class="fas fa-edit"></i></button>
+            <button onclick="deleteMember('${docSnap.id}')"><i class="fas fa-trash"></i></button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    window.openEdit = function(id, name, role, school, date) {
+      currentEditId = id;
+      document.getElementById("editName").value = name;
+      document.getElementById("editRole").value = role;
+      document.getElementById("editSchool").value = school;
+      document.getElementById("editDate").value = date;
+      document.getElementById("editModal").style.display = "block";
+    };
+
+    window.saveEdit = async function() {
+      const name = document.getElementById("editName").value.trim();
+      const role = document.getElementById("editRole").value.trim();
+      const school = document.getElementById("editSchool").value;
+      const date = document.getElementById("editDate").value;
+      const msg = document.getElementById("msg");
+
+      if (!name || !role || !school || !date) {
+        alert("Tafadhali jaza taarifa zote kabla ya kuhifadhi.");
+        return;
+      }
+
+      try {
+        // Hapa unaweza pia kuongeza check ya duplicate kama unataka pia isiruhusu jina kujirudia wakati wa edit
+        await updateDoc(doc(db, "members", currentEditId), {
+          name, role, school, joinedDate: Timestamp.fromDate(new Date(date))
+        });
+        closeModal();
+        loadMembers();
+        msg.textContent = "Mwanachama amehaririwa!";
+        msg.className = "success";
+        msg.style.display = "block";
+      } catch (err) {
+        alert("Kosa: " + err.message);
+      }
+    };
+
+    window.closeModal = function() {
+      document.getElementById("editModal").style.display = "none";
+    };
+
+    window.deleteMember = async function(id) {
+      if (confirm("Una hakika unataka kufuta mwanachama huyu?")) {
+        try {
+          await deleteDoc(doc(db, "members", id));
+          loadMembers();
+          const msg = document.getElementById("msg");
+          msg.textContent = "Mwanachama amefutwa!";
+          msg.className = "success";
+          msg.style.display = "block";
+        } catch (err) {
+          alert("Kosa: " + err.message);
+        }
+      }
+    };
+
+    // Load members on page load
+    loadMembers();
+
+  </script>
+</body>
+</html>

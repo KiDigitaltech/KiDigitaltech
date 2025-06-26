@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login | UWAKAMA</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom right, #ffa726, #fb8c00);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .login-container {
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+    .login-container img {
+      width: 100px;
+      margin-bottom: 15px;
+    }
+    h2 {
+      margin-bottom: 20px;
+      color: #fb8c00;
+    }
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1em;
+      transition: border 0.3s;
+    }
+    input:focus {
+      border-color: #fb8c00;
+      outline: none;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 6px;
+      background-color: #fb8c00;
+      color: white;
+      font-size: 1em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #ef6c00;
+    }
+    .links {
+      margin-top: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .links a {
+      color: #fb8c00;
+      text-decoration: none;
+      font-size: 0.95em;
+    }
+    .links a:hover {
+      text-decoration: underline;
+    }
+    .help-desk {
+      margin-top: 25px;
+      font-size: 0.85em;
+      color: #666;
+    }
+    #error-message {
+      color: red;
+      font-size: 0.9em;
+      margin-top: 10px;
+    }
+    .loading-spinner {
+      display: none;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #fb8c00;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 15px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @media (max-width: 480px) {
+      .login-container {
+        padding: 20px;
+      }
+      h2 {
+        font-size: 1.5em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <img src="logo.png" alt="UWAKAMA Logo" />
+    <h2>Karibu UWAKAMA</h2>
+    <form id="loginForm">
+      <input
+        type="email"
+        id="email"
+        placeholder="Barua pepe"
+        required
+        onkeydown="if(event.key==='Enter'){event.preventDefault(); document.getElementById('password').focus();}"
+      />
+      <input
+        type="password"
+        id="password"
+        placeholder="Nenosiri"
+        required
+        onkeydown="if(event.key==='Enter'){event.preventDefault(); document.getElementById('loginForm').requestSubmit();}"
+      />
+      <button type="submit">Ingia</button>
+    </form>
+
+    <div class="loading-spinner" id="spinner"></div>
+
+    <div id="error-message"></div>
+
+    <div class="links">
+      <a href="register.html">Jisajili</a>
+      <a href="reset-password.html">Umesahau Nenosiri?</a>
+    </div>
+
+    <div class="help-desk">
+      <p>
+        Help Desk:<br />
+        Email: imariki035@gmail.com<br />
+        Simu: 0717173853
+      </p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAdCrGuPYfku4swj8URW0SXvJ8CVlUZ0Bc",
+      authDomain: "uwakama-66696.firebaseapp.com",
+      projectId: "uwakama-66696",
+      storageBucket: "uwakama-66696.appspot.com",
+      messagingSenderId: "94913825341",
+      appId: "1:94913825341:web:4da7752f80b1a3a5783854",
+      measurementId: "G-S3PWMTYVB4"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const loginForm = document.getElementById("loginForm");
+    const errorMsg = document.getElementById("error-message");
+    const spinner = document.getElementById("spinner");
+
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorMsg.textContent = "";
+      spinner.style.display = "block";
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        window.location.href = "dashboard.html";
+      } catch (error) {
+        errorMsg.textContent = "Email au nenosiri si sahihi.";
+        spinner.style.display = "none";
+      }
+    });
+  </script>
+</body>
+</html>

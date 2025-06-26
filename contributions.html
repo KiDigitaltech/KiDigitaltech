@@ -1,0 +1,259 @@
+<!-- Michango.html (bila ID Number) -->
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Michango | UWAKAMA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    body { background-color: #fdfaf6; }
+    header {
+      background-color: #ff8800; color: white; padding: 20px 15px; text-align: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    nav { margin-top: 10px; }
+    nav a {
+      color: white; margin: 0 12px; text-decoration: none; font-weight: 500;
+    }
+    main {
+      max-width: 960px; margin: 30px auto; background: white; padding: 25px;
+      border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.05);
+    }
+    h3 {
+      color: #ff8800; border-bottom: 2px solid #ff8800; padding-bottom: 5px;
+    }
+    input, select, button {
+      width: 100%; padding: 10px; margin-top: 10px; border-radius: 6px;
+      border: 1px solid #ccc; font-size: 15px;
+    }
+    button {
+      background-color: #ff8800; color: white; font-weight: 600;
+      border: none; margin-top: 10px; cursor: pointer;
+    }
+    button:hover { background-color: #e67300; }
+    table {
+      width: 100%; margin-top: 20px; border-collapse: collapse;
+    }
+    th, td {
+      padding: 10px; border: 1px solid #ddd; text-align: left;
+    }
+    th { background-color: #ffe0b2; }
+    .btn-edit, .btn-delete {
+      padding: 6px 10px; border-radius: 4px; font-size: 13px; cursor: pointer;
+    }
+    .btn-edit { background-color: #ffd180; }
+    .btn-delete { background-color: #ff5252; color: white; }
+    #msg.success {
+      background: #d4edda; color: #155724; padding: 10px;
+      border-radius: 5px; margin-top: 10px;
+    }
+    #msg.error {
+      background: #f8d7da; color: #721c24; padding: 10px;
+      border-radius: 5px; margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>Michango ya UWAKAMA</h2>
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="members.html">Wanachama</a>
+      <a href="contributions.html">Michango</a>
+      <a href="expenses.html">Matumizi</a>
+      <a href="reports.html">Ripoti</a>
+    </nav>
+  </header>
+
+  <main>
+    <section>
+      <h3>Rekodi / Hariri Mchango</h3>
+      <input type="hidden" id="contributionId" />
+      <select id="member"></select>
+      <select id="month">
+        <option value="">--Chagua Mwezi--</option>
+        <option value="Januari">Januari</option>
+        <option value="Februari">Februari</option>
+        <option value="Machi">Machi</option>
+        <option value="Aprili">Aprili</option>
+        <option value="Mei">Mei</option>
+        <option value="Juni">Juni</option>
+        <option value="Julai">Julai</option>
+        <option value="Agosti">Agosti</option>
+        <option value="Septemba">Septemba</option>
+        <option value="Oktoba">Oktoba</option>
+        <option value="Novemba">Novemba</option>
+        <option value="Disemba">Disemba</option>
+      </select>
+      <input type="number" id="year" placeholder="Weka Mwaka (mf. 2025)" />
+      <input type="number" id="amount" placeholder="Kiasi (TZS)" />
+      <button id="submitBtn">Hifadhi Mchango</button>
+      <div id="msg"></div>
+    </section>
+
+    <hr style="margin: 30px 0;" />
+
+    <section>
+      <h3>Orodha ya Michango</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Jina</th>
+            <th>Cheo</th>
+            <th>Shule</th>
+            <th>Kiasi</th>
+            <th>Mwezi</th>
+            <th>Mwaka</th>
+            <th>Tarehe ya Kulipia</th>
+            <th>Vitendo</th>
+          </tr>
+        </thead>
+        <tbody id="contributionTableBody"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    import {
+      getFirestore, collection, getDocs, addDoc, updateDoc,
+      deleteDoc, doc, query, orderBy, getDoc
+    } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAdCrGuPYfku4swj8URW0SXvJ8CVlUZ0Bc",
+      authDomain: "uwakama-66696.firebaseapp.com",
+      projectId: "uwakama-66696"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const membersMap = {};
+    const memberSelect = document.getElementById("member");
+
+    async function loadMembers() {
+      const snapshot = await getDocs(collection(db, "members"));
+      memberSelect.innerHTML = '<option value="">--Chagua Mwanachama--</option>';
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        membersMap[docSnap.id] = {
+          name: data.name,
+          role: data.role || "-",
+          school: data.school || "-"
+        };
+        const option = document.createElement("option");
+        option.value = docSnap.id;
+        option.textContent = data.name;
+        memberSelect.appendChild(option);
+      });
+    }
+
+    async function loadContributions() {
+      const tbody = document.getElementById("contributionTableBody");
+      tbody.innerHTML = "<tr><td colspan='8'>Inapakia...</td></tr>";
+      const q = query(collection(db, "contributions"), orderBy("date", "desc"));
+      const snapshot = await getDocs(q);
+      tbody.innerHTML = "";
+
+      snapshot.forEach(docSnap => {
+        const d = docSnap.data();
+        const member = membersMap[d.memberId] || {};
+        const tr = document.createElement("tr");
+        const paymentDate = d.date?.toDate().toLocaleDateString("sw-TZ") || "-";
+        tr.innerHTML = `
+          <td>${member.name || "-"}</td>
+          <td>${member.role || "-"}</td>
+          <td>${member.school || "-"}</td>
+          <td>${Number(d.amount).toLocaleString()}</td>
+          <td>${d.month || "-"}</td>
+          <td>${d.year || "-"}</td>
+          <td>${paymentDate}</td>
+          <td>
+            <button class="btn-edit" data-id="${docSnap.id}">Hariri</button>
+            <button class="btn-delete" data-id="${docSnap.id}">Futa</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      addEventListeners();
+    }
+
+    function addEventListeners() {
+      document.querySelectorAll(".btn-edit").forEach(btn => {
+        btn.onclick = async () => {
+          const snap = await getDoc(doc(db, "contributions", btn.dataset.id));
+          if (snap.exists()) {
+            const d = snap.data();
+            document.getElementById("contributionId").value = snap.id;
+            document.getElementById("member").value = d.memberId;
+            document.getElementById("amount").value = d.amount;
+            document.getElementById("month").value = d.month;
+            document.getElementById("year").value = d.year;
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }
+        };
+      });
+
+      document.querySelectorAll(".btn-delete").forEach(btn => {
+        btn.onclick = async () => {
+          if (confirm("Una uhakika unataka kufuta mchango huu?")) {
+            await deleteDoc(doc(db, "contributions", btn.dataset.id));
+            loadContributions();
+          }
+        };
+      });
+    }
+
+    document.getElementById("submitBtn").addEventListener("click", async () => {
+      const id = document.getElementById("contributionId").value;
+      const memberId = memberSelect.value;
+      const amount = parseFloat(document.getElementById("amount").value);
+      const month = document.getElementById("month").value;
+      const year = parseInt(document.getElementById("year").value);
+      const msg = document.getElementById("msg");
+
+      if (!memberId || !amount || !month || !year) {
+        msg.textContent = "Tafadhali jaza taarifa zote!";
+        msg.className = "error";
+        return;
+      }
+
+      try {
+        const data = {
+          memberId,
+          amount,
+          month,
+          year,
+          date: new Date()
+        };
+
+        if (id) {
+          await updateDoc(doc(db, "contributions", id), data);
+          msg.textContent = "Mchango umesasishwa!";
+        } else {
+          await addDoc(collection(db, "contributions"), data);
+          msg.textContent = "Mchango umehifadhiwa!";
+        }
+
+        msg.className = "success";
+        await loadContributions();
+        document.getElementById("contributionId").value = "";
+        document.getElementById("amount").value = "";
+        document.getElementById("month").value = "";
+        document.getElementById("year").value = "";
+        memberSelect.value = "";
+
+      } catch (e) {
+        msg.textContent = "Kosa: " + e.message;
+        msg.className = "error";
+      }
+    });
+
+    await loadMembers();
+    await loadContributions();
+  </script>
+</body>
+</html>
